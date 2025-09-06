@@ -1,0 +1,60 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+dC:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/FSM_testbench
+vSpeed_controlled_tb
+Z0 DXx6 sv_std 3 std 0 22 AD7iAPLo6nTIKk<N0eo=D3
+Z1 !s110 1748725063
+!i10b 1
+!s100 YWNXeNGTH6f3]FlNN_AhH0
+IzYKm]2G<=B5fVC<`o9MI81
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+!s105 Speed_controlled_tb_sv_unit
+S1
+Z3 dC:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench
+w1748725050
+8C:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench/Speed_controlled_tb.sv
+FC:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench/Speed_controlled_tb.sv
+L0 8
+Z4 OV;L;10.5b;63
+r1
+!s85 0
+31
+!s108 1748725063.000000
+!s107 C:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench/Speed_controlled_tb.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench/Speed_controlled_tb.sv|
+!i113 1
+Z5 o-work work -sv
+Z6 tCvgOpt 0
+n@speed_controlled_tb
+vSpeed_controller
+R0
+R1
+!i10b 1
+!s100 <e0OUmD=jTBcJ^HoOUKfN0
+Iankb1FGj_lO9ZnJQleJCz3
+R2
+!s105 Speed_controller_sv_unit
+S1
+R3
+w1748724676
+8C:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench/Speed_controller.sv
+FC:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench/Speed_controller.sv
+L0 6
+R4
+r1
+!s85 0
+31
+!s108 1748725062.000000
+!s107 C:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench/Speed_controller.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/Speed_controller_testbench/Speed_controller.sv|
+!i113 1
+R5
+R6
+n@speed_controller

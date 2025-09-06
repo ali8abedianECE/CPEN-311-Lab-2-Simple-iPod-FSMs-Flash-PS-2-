@@ -1,0 +1,154 @@
+`define STATE_IDLE         3'b000
+`define STATE_READ_REQUEST 3'b001
+`define STATE_WAIT_FOR_DATA 3'b010
+`define STATE_LOWER_HALF   3'b011
+`define STATE_UPPER_HALF   3'b100
+
+module FSM_tb(); 
+
+    reg err; 
+    reg clk, Trigger, reset_address, reset_to_end, play_enabled, direction;
+    reg [31:0] flash_mem_readdata;
+    wire [15:0] audio_sample;
+    wire [22:0] flash_mem_address;
+    wire flash_mem_read;
+    reg flash_mem_waitrequest, flash_mem_readdatavalid;
+    reg [22:0] expected_address; 
+
+    FSM uut (
+        .clk(clk),
+        .Trigger(Trigger),
+        .reset_address(reset_address),
+        .reset_to_end(reset_to_end),
+        .play_enabled(play_enabled),
+        .direction(direction),
+        .audio_sample(audio_sample),
+        .flash_mem_readdata(flash_mem_readdata),
+        .flash_mem_address(flash_mem_address),
+        .flash_mem_read(flash_mem_read),
+        .flash_mem_waitrequest(flash_mem_waitrequest),
+        .flash_mem_readdatavalid(flash_mem_readdatavalid)
+    );
+
+    task check_state(input [2:0] expected_state);
+        if (uut.STATE !== expected_state) begin
+            err = 1;
+            $stop;
+        end
+    endtask : check_state
+
+    task Triggerer();
+        @(posedge clk);
+        reset_address = 0;
+        reset_to_end = 0;
+        play_enabled = 1;
+        Trigger = 1;
+        #10;
+        Trigger = 0;
+    endtask : Triggerer
+
+    task transition_state_Data_To_Lower_Half(input [31:0] data);
+        @(posedge clk);
+        flash_mem_waitrequest = 0;
+        flash_mem_readdatavalid = 1;
+        flash_mem_readdata = data;
+        @(posedge clk);
+        if (uut.DATA !== data) begin
+            err = 1;
+            $stop;
+        end
+        if (audio_sample !== data[15:0]) begin
+            err = 1;
+            $stop;
+        end
+    endtask : transition_state_Data_To_Lower_Half
+
+    task transition_state_Lower_Half_To_Upper_Half();
+        @(posedge clk);
+        if (audio_sample !== uut.DATA[31:16]) begin
+            err = 1;
+            $stop;
+        end
+    endtask : transition_state_Lower_Half_To_Upper_Half
+
+    task check_address(input [22:0] exp_addr);
+        if (flash_mem_address !== exp_addr) begin
+            err = 1;
+            $stop;
+        end
+    endtask : check_address
+
+    initial begin 
+        clk = 0;
+        forever begin
+            #5 clk = ~clk; 
+        end
+    end
+
+    initial begin 
+        err = 0; 
+        reset_address = 1;
+        reset_to_end = 0;
+        play_enabled = 0;
+        Trigger = 0;
+        flash_mem_waitrequest = 0;
+        flash_mem_readdatavalid = 0;
+        flash_mem_readdata = 32'h00000000;
+        direction = 0;
+        expected_address = 23'h000000;
+        #10;
+
+        for (integer i = 0; i < 50; i = i + 1) begin
+            Triggerer();
+            transition_state_Data_To_Lower_Half({i, i});
+            check_address(expected_address);
+            transition_state_Lower_Half_To_Upper_Half();
+            check_state(`STATE_IDLE);
+            expected_address = expected_address + 1;
+        end
+
+        reset_address = 1;
+        #10;
+        reset_address = 0;
+        expected_address = 23'h000000;
+        Triggerer();
+        transition_state_Data_To_Lower_Half(32'h55AA55AA);
+        check_address(expected_address);
+        transition_state_Lower_Half_To_Upper_Half();
+        check_state(`STATE_IDLE);
+
+        for (integer i = 0; i < 50; i = i + 1) begin
+            expected_address = expected_address + 1;
+            Triggerer();
+            transition_state_Data_To_Lower_Half({i, i});
+            check_address(expected_address);
+            transition_state_Lower_Half_To_Upper_Half();
+            check_state(`STATE_IDLE);
+        end
+
+        reset_to_end = 1;
+        #10;
+        reset_to_end = 0;
+        expected_address = 23'h7FFFF;
+        Triggerer();
+        transition_state_Data_To_Lower_Half(32'hA5A5A5A5);
+        check_address(expected_address);
+        transition_state_Lower_Half_To_Upper_Half();
+        check_state(`STATE_IDLE);
+
+        for (integer i = 0; i < 50; i = i + 1) begin
+            expected_address = expected_address + 1;
+            Triggerer();
+            transition_state_Data_To_Lower_Half({i, i});
+            check_address(expected_address);
+            transition_state_Lower_Half_To_Upper_Half();
+            check_state(`STATE_IDLE);
+        end
+
+        if (err == 0) begin
+            $display("All tests passed.");
+        end
+        $stop;
+    end
+
+endmodule : FSM_tb

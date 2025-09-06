@@ -1,0 +1,118 @@
+`define STATE_IDLE 3'b000
+`define STATE_TRIGGER 3'b001
+`define STATE_READ_SETUP 3'b010
+`define STATE_READ_WAIT 3'b011
+`define STATE_READ_VALID 3'b100
+`define STATE_CAPTURE 3'b101
+`define STATE_OUTPUT 3'b110
+`define STATE_UPADTE_ADDR 3'b111
+
+module FSM(clk, reset, Trigger, play, stop, forward, backward, restart, 
+            flash_mem_waitrequest, flash_mem_readdatavalid, flash_mem_readdata,
+            flash_mem_read, flash_mem_address, flash_mem_byteenable, 
+            audio_sample, audio_valid); 
+
+        input clk, reset, Trigger, play, stop, forward, backward, restart, 
+              flash_mem_waitrequest, flash_mem_readdatavalid;
+
+        input [31:0] flash_mem_readdata;
+        output reg flash_mem_read;
+        output reg [22:0] flash_mem_address;
+        output reg [3:0] flash_mem_byteenable;
+        output reg [15:0] audio_sample;
+        output reg audio_valid;
+
+        reg [2:0] state; 
+        reg [22:0] address_counter;
+        reg        high_half;
+
+        always_ff @(posedge clk or posedge reset) begin
+            if (reset) begin
+                state <= `STATE_IDLE;
+                flash_mem_read <= 1'b0;
+                flash_mem_address <= 23'b0;
+                flash_mem_byteenable <= 4'b1111;
+                audio_sample <= 16'b0;
+                audio_valid <= 1'b0;
+                address_counter  <= 23'b0;
+            end else begin
+                flash_mem_read <= 1'b0;
+                audio_valid <= 1'b0;
+                case (state)
+                    `STATE_IDLE: begin
+                        state <= stop ? `STATE_IDLE : `STATE_TRIGGER;
+                    end
+                    
+                    `STATE_TRIGGER: begin
+                        state <= Trigger ? `STATE_READ_SETUP : `STATE_TRIGGER;
+                    end
+
+                    `STATE_READ_SETUP: begin
+                        flash_mem_read <= 1'b1;
+                        flash_mem_address <= address_counter;
+                        flash_mem_byteenable <= 4'b1111;
+                        state <= `STATE_READ_WAIT;
+                    end
+
+                    `STATE_READ_WAIT: begin
+                        if (flash_mem_waitrequest) begin
+                            state <= `STATE_READ_WAIT;
+                        end else begin
+                            state <= `STATE_READ_VALID;
+                        end
+                    end
+
+                    `STATE_READ_VALID: begin
+                        if (flash_mem_readdatavalid) begin
+                            // first deliver bits[15:0], then bits[31:16] and advance address
+                            if (!high_half) begin
+                                audio_sample <= flash_mem_readdata[15:0];
+                                high_half    <= 1'b1;
+                            end else begin
+                                audio_sample     <= flash_mem_readdata[31:16];
+                                high_half        <= 1'b0;
+                                address_counter  <= address_counter + 1;
+                            end
+
+                            audio_valid <= 1'b1;
+                            state       <= `STATE_CAPTURE;
+                        end else begin
+                            state <= `STATE_READ_VALID;
+                        end
+                    end
+
+
+                    `STATE_CAPTURE: begin
+                        if (play) begin
+                            state <= `STATE_OUTPUT;
+                            audio_sample <= audio_sample;
+                            audio_valid <= 1'b1;
+                        end else if (stop) begin
+                            state <= `STATE_IDLE;
+                        end else begin
+                            state <= `STATE_CAPTURE;
+                        end
+                    end
+
+                    `STATE_OUTPUT: begin
+                        state <= play ? `STATE_UPDATE_ADDR : `STATE_IDLE;
+                    end
+
+                    `STATE_UPDATE_ADDR: begin
+                        if (restart) begin
+                            address_counter <= 23'b0;
+                        end else if (forward) begin
+                            address_counter <= address_counter + 1;
+                        end else if (backward) begin
+                            address_counter <= address_counter - 1;
+                        end
+                        state <= `STATE_TRIGGER;
+                    end
+
+                    default: begin
+                        state <= `STATE_IDLE;
+                    end
+                endcase
+            end
+end
+endmodule : FSM

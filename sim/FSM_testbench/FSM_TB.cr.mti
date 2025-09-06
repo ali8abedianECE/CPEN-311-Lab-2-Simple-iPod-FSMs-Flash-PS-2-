@@ -1,0 +1,8 @@
+C:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/FSM_testbench/FSM.sv {1 {vlog -work work -sv -stats=none C:/Users/a_abe/Desktop/Ali_Abedian_49665789_Lab_2/sim/FSM_testbench/FSM.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module FSM
+
+Top level modules:
+	FSM
+
+} {} {}}
