@@ -1,41 +1,70 @@
 # Simple iPod — CPEN 311 Lab 2
 
-Small “iPod-style” Lab: read audio samples from on board Flash and stream them to the audio DAC, with PS/2 keyboard for play/stop/direction plus on-board keys for speed. :contentReference[oaicite:0]{index=0}
+A small "iPod-style" audio player implementation that reads audio samples from on-board Flash memory and streams them to an audio DAC. Features PS/2 keyboard control for playback operations and on-board keys for speed control.
 
 ---
 
-## Inside this repo
-- **Quartus/RTL** (top + modules)
-- **sim/** ModelSim testbenches & screenshots
-- **.SOF** lives under `rtl/` (project builds/loads) :contentReference[oaicite:1]{index=1}
+## Project Structure
+
+- **Quartus/RTL** — Top-level module and sub-modules
+- **sim/** — ModelSim testbenches with simulation screenshots
+- **.SOF file** — Located in `rtl/` directory for programming the board
 
 ---
 
-## Target boards
-- **DE2** — direct flash chip (S29GL032N) interface signals: `FL_DQ, FL_ADDR, FL_WE_N, FL_RST_N, FL_OE_N, FL_CE_N` (read-only: tie `FL_WE_N=1`, `FL_RST_N=1`) :contentReference[oaicite:2]{index=2}
-- **DE1-SoC** — Altera Generic Quad SPI Flash controller via Avalon-MM (`flash_mem_*` signals, reads use `waitrequest`/`readdatavalid`) :contentReference[oaicite:3]{index=3}
+## Target Boards
+
+### DE2 Board
+- **Flash Interface**: Direct S29GL032N flash chip interface
+- **Signals**: `FL_DQ`, `FL_ADDR`, `FL_WE_N`, `FL_RST_N`, `FL_OE_N`, `FL_CE_N`
+- **Configuration**: Read-only mode (`FL_WE_N=1`, `FL_RST_N=1`)
+
+### DE1-SoC Board
+- **Flash Interface**: Altera Generic Quad SPI Flash controller via Avalon-MM
+- **Signals**: `flash_mem_*` signals
+- **Read Protocol**: Uses `waitrequest`/`readdatavalid` handshaking
 
 ---
 
-## Controls (as per lab)
-**PS/2 keyboard:**
-- `E` → Play | `D` → Stop | `B` → Backward | `F` → Forward  
-- `R` → Restart (bonus, optional) :contentReference[oaicite:4]{index=4}
+## Controls
 
-**Board keys:**
-- `KEY0` Speed up | `KEY1` Speed down | `KEY2` Reset to **22 kHz** :contentReference[oaicite:5]{index=5}
+### PS/2 Keyboard Commands
+| Key | Function |
+|-----|----------|
+| `E` | Play |
+| `D` | Stop |
+| `B` | Backward |
+| `F` | Forward |
+| `R` | Restart (Bonus Feature - +5%) |
+
+### Board Keys
+| Key | Function |
+|-----|----------|
+| `KEY0` | Speed Up |
+| `KEY1` | Speed Down |
+| `KEY2` | Reset to 22 kHz |
 
 ---
 
-## Audio rate / clocks (lab spec)
-- **22,000 Hz** sample rate ⇒ one new sample every **~0.045 ms**  
-- Generate 22 kHz from `TD_CLK27` (asynchronous to 50 MHz FSM clock); edge-detect the 22 kHz tick when driving the FSM(s) :contentReference[oaicite:6]{index=6}
+## Audio Specifications
+
+- **Sample Rate**: 22,000 Hz (one sample every ~0.045 ms)
+- **Clock Generation**: 22 kHz derived from `TD_CLK27` (27 MHz)
+- **Synchronization**: Edge-detection of 22 kHz tick drives FSM (asynchronous to 50 MHz system clock)
 
 ---
 
-## Flash data layout (lab spec)
-- **DE2**: address = **byte** index (8-bit data). 16-bit samples are at consecutive bytes (LSB at even addr, MSB at next odd addr). First sample at addrs **0/1**, last at **0x1FFFFE/0x1FFFFF**. :contentReference[oaicite:7]{index=7}  
-- **DE1-SoC**: address = **word** index (32-bit data). Two 16-bit samples per word (lower 16 then upper 16). First sample at word **0 (bits 15:0)**, last sample at word **0x7FFFF (bits 31:16)**. :contentReference[oaicite:8]{index=8}
+## Flash Memory Layout
+
+### DE2 Board
+- **Address Unit**: Byte index (8-bit data)
+- **16-bit Sample Storage**: Consecutive bytes (LSB at even address, MSB at odd address)
+- **Address Range**: First sample at 0x0/0x1, last sample at 0x1FFFFE/0x1FFFFF
+
+### DE1-SoC Board
+- **Address Unit**: Word index (32-bit data)
+- **Sample Packing**: Two 16-bit samples per word (lower 16 bits, then upper 16 bits)
+- **Address Range**: First sample at word 0 (bits 15:0), last sample at word 0x7FFFF (bits 31:16)
 
 ---
 
@@ -104,21 +133,3 @@ stateDiagram-v2
     UPPER1 --> IDLE: reset_address || !play_enabled
     LOWER2 --> IDLE: reset_address || !play_enabled
     UPPER2 --> IDLE: reset_address || !play_enabled
-```
-
-**Notes**
-- The two “HALF_1” states output the first 16-bit sample from the fetched word (DE1-SoC: lower then upper 16; DE2: the two bytes you assembled).  
-- The two “HALF_2” states output the next 16-bit sample.  
-- Direction and wrapping are handled alongside address control (increment/decrement on play; hold on stop; restart snaps to start/end).
----
-
-## Run
-1) Open the Quartus project from the template, compile, and program the board.  
-2) Attach PS/2 keyboard + audio output.  
-3) Press `E/D/B/F` to control playback/direction; `R` to restart (bonus).  
-4) Use `KEY0/1/2` to change/reset speed to **22 kHz**. :contentReference[oaicite:26]{index=26}
-
----
-
-## Notes
-- There’s an **optional bonus** which were both implemented the **R** (+5%) and **8-bit @ 44 kHz** (+5%). :contentReference[oaicite:29]{index=29}
