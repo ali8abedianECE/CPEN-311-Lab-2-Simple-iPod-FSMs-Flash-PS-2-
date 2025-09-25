@@ -14,11 +14,6 @@ A small "iPod-style" audio player implementation that reads audio samples from o
 
 ## Target Boards
 
-### DE2 Board
-- **Flash Interface**: Direct S29GL032N flash chip interface
-- **Signals**: `FL_DQ`, `FL_ADDR`, `FL_WE_N`, `FL_RST_N`, `FL_OE_N`, `FL_CE_N`
-- **Configuration**: Read-only mode (`FL_WE_N=1`, `FL_RST_N=1`)
-
 ### DE1-SoC Board
 - **Flash Interface**: Altera Generic Quad SPI Flash controller via Avalon-MM
 - **Signals**: `flash_mem_*` signals
@@ -55,11 +50,6 @@ A small "iPod-style" audio player implementation that reads audio samples from o
 ---
 
 ## Flash Memory Layout
-
-### DE2 Board
-- **Address Unit**: Byte index (8-bit data)
-- **16-bit Sample Storage**: Consecutive bytes (LSB at even address, MSB at odd address)
-- **Address Range**: First sample at 0x0/0x1, last sample at 0x1FFFFE/0x1FFFFF
 
 ### DE1-SoC Board
 - **Address Unit**: Word index (32-bit data)
