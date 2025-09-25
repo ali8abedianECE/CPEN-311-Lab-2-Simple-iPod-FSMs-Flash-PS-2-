@@ -72,6 +72,40 @@ Below is the **Flash Read / Output FSM** as implemented (state names and transit
 - **Upper_HALF_2**  
   - `Upper_HALF_2 → IDLE` on `(Trigger && play_enabled)`.
 
+### Diagram
+```mermaid
+stateDiagram-v2
+    direction TB
+
+    [*] --> IDLE
+
+    state "READ_REQ" as READ_REQ
+    state "WAIT" as WAIT
+    state "Lower_HALF_1" as LOWER1
+    state "Upper_HALF_1" as UPPER1
+    state "Lower_HALF_2" as LOWER2
+    state "Upper_HALF_2" as UPPER2
+
+    %% Main flow
+    IDLE --> READ_REQ: Trigger && play_enabled
+    READ_REQ --> READ_REQ: flash_mem_waitrequest
+    READ_REQ --> WAIT: !flash_mem_waitrequest
+    WAIT --> LOWER1: flash_mem_readdatavalid
+    LOWER1 --> UPPER1: Trigger && play_enabled
+    UPPER1 --> LOWER2: Trigger && play_enabled
+    LOWER2 --> UPPER2: Trigger && play_enabled
+    UPPER2 --> IDLE:  Trigger && play_enabled
+
+    %% Global return-to-IDLE (reset or pause)
+    IDLE   --> IDLE: reset_address || !play_enabled
+    READ_REQ --> IDLE: reset_address || !play_enabled
+    WAIT   --> IDLE: reset_address || !play_enabled
+    LOWER1 --> IDLE: reset_address || !play_enabled
+    UPPER1 --> IDLE: reset_address || !play_enabled
+    LOWER2 --> IDLE: reset_address || !play_enabled
+    UPPER2 --> IDLE: reset_address || !play_enabled
+```
+
 **Notes**
 - The two “HALF_1” states output the first 16-bit sample from the fetched word (DE1-SoC: lower then upper 16; DE2: the two bytes you assembled).  
 - The two “HALF_2” states output the next 16-bit sample.  
